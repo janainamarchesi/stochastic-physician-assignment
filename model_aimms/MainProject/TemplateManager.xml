@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<TemplateManager>
+	<Page Name="All Data Pages" PageGUID="1A0629DE-2FC4-4706-989D-C1BF0FF3BE78" />
+	<Page Name="[Data Page] PatientArrival" PageGUID="9D3DB902-004C-4A62-83B4-9E1EE77F449D" Marked="true" />
+	<Page Name="[Data Page] PhysicianAssign" PageGUID="6AD7ADA5-1C92-42E0-A841-6F8361A747CF" />
+	<Page Name="[Data Page] x" PageGUID="38080D3A-16C3-45CB-8E97-FD17A078461E" />
+	<Page Name="[Data Page] surgery" PageGUID="93CB8D91-2403-4851-B401-772F0678DE9D" />
+	<Page Name="[Data Page] clinic" PageGUID="4ADD04C5-EC8E-4CDC-B107-6ECA6B41FE22" />
+	<Page Name="[Data Page] ClinicCap" PageGUID="85E106B8-D8A1-4648-BD36-61E4C084F845" Marked="true" />
+	<Page Name="[Data Page] SurgeryCap" PageGUID="136B36B2-E25B-49E7-9771-38619289C8B2" Marked="true" />
+	<Page Name="[Data Page] ClinicCapacity" PageGUID="EA9740DB-ACA5-4CA9-A6E5-92081325ABED" />
+	<Page Name="[Data Page] SurgeryCapacity" PageGUID="B1F24EAB-164B-4BC8-AFE0-B09D9893939F" />
+	<Page Name="[Data Page] ORtoClinicTwoWeeks" PageGUID="BC8574A8-C1A5-4A88-B7C5-A6A1FECC2DB4" />
+	<Page Name="[Data Page] Cap" PageGUID="E0B270D3-5D0F-4B9E-ACE7-00C8C84E0098" Marked="true" />
+	<Page Name="[Data Page] y" PageGUID="4C8ED826-634D-4196-8497-3DE572F10304" Marked="true" />
+	<Page Name="[Data Page] surgerywait" PageGUID="114A0B0E-50BE-49EE-8BD7-83FDFD26867C" />
+	<Page Name="[Data Page] r" PageGUID="DCB2C4ED-1237-4383-85DF-50C40EF1E8D8" Marked="true" />
+	<Page Name="[Data Page] xLBRep" PageGUID="9E66CA0F-03CC-41C9-92A2-BBCE812190A8" />
+	<Page Name="[Data Page] SurgeryWaitLBRep" PageGUID="B533A18C-33B5-41EC-B4E6-7CDC050616F5" />
+	<Page Name="[Data Page] ClinicWaitLBRep" PageGUID="B3BAD5A8-B8DF-4A0C-9ACA-AEEE9BD789A3" />
+	<Page Name="[Data Page] SurgeryDemandLBRep" PageGUID="E9416B86-015F-44F8-A733-32FA6F7D6FAA" />
+	<Page Name="[Data Page] DemUB" PageGUID="1A558AC0-04F4-480B-B30F-6A915E622658" />
+	<Page Name="[Data Page] DemRep2" PageGUID="EA9746BF-05AA-442C-B903-9C3BCEFA1B3A" />
+	<Page Name="[Data Page] ClinicLBRep" PageGUID="FBA94F0F-3D90-4820-AF7E-0A745670613E" />
+	<Page Name="[Data Page] SurgeryLBRep" PageGUID="38C3DA66-4722-4634-B4F1-2568924CA0D0" />
+	<Page Name="[Data Page] sareLBRep" PageGUID="6853D12D-01E0-4DEC-866D-7643DF432FD0" />
+	<Page Name="[Data Page] sunassignLBRep" PageGUID="079D2BC4-9EA6-4ED9-B085-3E05A62D345B" />
+	<Page Name="[Data Page] sgondaLBRep" PageGUID="DC8608AA-7F0E-4A5A-B776-31AB3450D824" />
+	<Page Name="[Data Page] smaxconsecutiveorLBRep" PageGUID="58854395-A713-4BE4-982D-B7508442B825" />
+	<Page Name="[Data Page] sratio1LBRep" PageGUID="E22E88C7-96DC-411D-9D89-692AC05E70AF" />
+	<Page Name="[Data Page] sratio2LBRep" PageGUID="92C0AA9E-6BDB-4374-97F2-977480635769" />
+	<Page Name="[Data Page] SurgeryWaitUBRep" PageGUID="1F671521-F6B0-4194-AD8B-3AFE758141D9" />
+	<Page Name="[Data Page] ClinicWaitUBRep" PageGUID="5550181D-AFAF-44A6-8B97-2ABF545B4716" />
+	<Page Name="[Data Page] TotalSurgeryLBRep" PageGUID="AF5FD9BC-1D4A-4844-B28E-BA9414E7CA34" />
+	<Page Name="[Data Page] SurgeryUBRep" PageGUID="166F5555-8257-44DA-9E0B-97E06BF654CA" />
+	<Page Name="[Data Page] ClinicUBRep" PageGUID="CDA37C2A-FF49-435A-A957-22AE23ED9F53" />
+	<Page Name="[Data Page] UpperBoundRep" PageGUID="D1B0401E-6C09-436F-8DBE-43AAC4CB132D" />
+	<Page Name="[Data Page] OFOut" PageGUID="C3BCD091-6CBD-4FB5-8973-D8A4E491695F" />
+	<Page Name="[Data Page] UpperBoundRep2" PageGUID="84BC175E-6D88-4A15-B7B3-90113BE4E4E6" />
+	<Page Name="[Data Page] UpperBound" PageGUID="66E4659D-62C2-44C4-957C-383A4E18312E" />
+	<Page Name="[Data Page] gap" PageGUID="5BBD8B94-8CD1-4625-AC92-D35F66896CBD" />
+	<Page Name="[Data Page] VarianceUB" PageGUID="59D169B8-05D7-4542-8527-BF457D747D27" Marked="true" />
+	<Page Name="[Data Page] PhysicianAssign2" PageGUID="DFD0B969-10AA-42D8-BCB3-7F2DC13D53D5" />
+	<Page Name="[Data Page] testealoc" PageGUID="9D57B466-C25C-478D-B27C-B82A62052C42" />
+	<Page Name="[Data Page] SurgeryTotal" PageGUID="3A9BA82E-79A5-45D0-B682-A3950A3BDCF4" />
+	<Page Name="[Data Page] clinicwait" PageGUID="C60534E0-438A-4CBA-B118-BC816EA80981" />
+	<Page Name="[Data Page] InicialQueueSurgery" PageGUID="36C14D3D-F67C-4486-88C1-034A39D93985" />
+	<Page Name="[Data Page] DemRep1" PageGUID="0EB5932F-4E40-4E9E-AC3E-B98A17CA054E" />
+	<Page Name="[Data Page] aux" PageGUID="F2FB103E-D3FE-4A0B-86E6-CC233F2D75FF" />
+	<Page Name="[Data Page] AuxLBRep" PageGUID="12D62B10-8C17-40F9-A699-05BEA17D99B8" />
+	<Page Name="[Data Page] Aux2LBRep" PageGUID="167B149F-2CFC-4141-BBBC-28EAC78033B1" />
+	<Page Name="[Data Page] TimeUBRep2" PageGUID="2870642B-6B64-4416-A131-CEF4D899E2A6" />
+	<Page Name="[Data Page] TimeUBRep" PageGUID="D64A7088-76F0-495D-993B-9D7030CB557E" />
+	<Page Name="[Data Page] AverageWaitClinic" PageGUID="7032C881-52FE-4ADC-9C34-A9A4FF0C9CEA" />
+	<Page Name="[Data Page] AverageWaitSurgery" PageGUID="A3BF24B8-42E6-49EC-A45F-EB84A6262990" />
+	<Page Name="[Data Page] CapacityClinicDay" PageGUID="7B1032AD-92D5-43F3-B000-8F64F660E75B" />
+	<Page Name="[Data Page] TotalCapClinicDay" PageGUID="3EF487D7-01B1-4867-9BCE-85267771B257" />
+	<Page Name="[Data Page] CapacitySurgeryDay" PageGUID="0A2193EF-1AA2-44A6-A70C-0A9B617934F0" />
+	<Page Name="[Data Page] TotalCapSurgeryDay" PageGUID="6B7EBFC9-B5A4-42B3-9910-CFB6974CB6A8" />
+	<Page Name="[Data Page] SeenClinicDay" PageGUID="4688AF3C-3C82-4EE3-BC03-16FC76DF153D" />
+	<Page Name="[Data Page] TotalSeenClinic" PageGUID="628ABA2C-30D2-4410-86D8-BAD144F6A2D9" />
+	<Page Name="[Data Page] SurgeriesCasesDay" PageGUID="FD05A952-9D9C-4D5E-A792-AC9424F1E07B" />
+	<Page Name="[Data Page] TotalSurgeriesCases" PageGUID="F1EA40DF-CE88-4938-96B0-E4858A8AF36C" />
+	<Page Name="[Data Page] MaxWaitClinicDay" PageGUID="21EBF471-2617-4740-9D23-047BCFC699D8" />
+	<Page Name="[Data Page] MaxWaitTotalDay" PageGUID="F15585B3-A9A8-464D-B671-BBAEFAC91066" />
+	<Page Name="[Data Page] AverageTotalWaitSurgery" PageGUID="78A93DE4-CE98-4790-AE53-9B237BF96C45" />
+	<Page Name="[Data Page] TotalWaitSurgery" PageGUID="AABEC456-0CD5-495C-A93E-A14B0A82EDBC" />
+	<Page Name="[Data Page] MaxTotalWaitSurgery" PageGUID="C17B5901-E8E0-44F6-977C-0DD4C6201911" />
+	<Page Name="[Data Page] TotalTotalClinic" PageGUID="36B3715C-392A-44DD-B231-9D79492B24C5" />
+	<Page Name="[Data Page] TotalTotalSurgeries" PageGUID="10C85265-D45D-4087-9D1E-B5B7A42A7B0E" />
+	<Page Name="[Data Page] AverageSurgeriesCasesWeek" PageGUID="00536B11-9142-4DF0-BF78-4AEF0934A97F" />
+	<Page Name="[Data Page] stde" PageGUID="B2F7EE30-120D-4BC0-BDA9-D8F5F2BBC3E9" />
+	<Page Name="[Data Page] SurgeriesCasesWeek" PageGUID="D95545A1-41ED-4DB1-8185-0A3BA3B9C5B5" />
+</TemplateManager>

@@ -1,0 +1,144 @@
+﻿Warning at line 107 in user-defined function section "PerformSAA":
+The units of ':=' are not commensurate.
+The unit analysis results in '[] := [s]'.
+Warning at line 159 in user-defined function section "PerformSAA":
+The units of ':=' are not commensurate.
+The unit analysis results in '[] := [s]'.
+Warning at line 62 in user-defined function section "EvaluateCandidates":
+The units of ':=' are not commensurate.
+The unit analysis results in '[] := [s]'.
+Warning at line 23 in user-defined function section "PostMainInitialization":
+Referencing a set as a one dimensional identifier is deprecated.
+Please rewrite as (k in Assign).
+Warning at line 34 in user-defined function section "PostMainInitialization":
+Referencing a set as a one dimensional identifier is deprecated.
+Please rewrite as (k in Assign).
+There is 87.754 Mb in use.
+Warning: The units of ':=' are not commensurate.
+The unit analysis results in '[] := [s]'.
+Warning: The units of ':=' are not commensurate.
+The unit analysis results in '[] := [s]'.
+Warning: The units of ':=' are not commensurate.
+The unit analysis results in '[] := [s]'.
+Warning: Referencing a set as a one dimensional identifier is deprecated.
+Please rewrite as (k in Assign).
+Warning: Referencing a set as a one dimensional identifier is deprecated.
+Please rewrite as (k in Assign).
+Warning at line 15 in user-defined function section "SolveCPLAN":
+The rows "C_MaxConsecutiveORDays(1,107)" and "C_MaxConsecutiveORDays(1,109)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning at line 15 in user-defined function section "SolveCPLAN":
+The rows "C_MaxConsecutiveORDays(1,109)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning at line 15 in user-defined function section "SolveCPLAN":
+The rows "C_MaxConsecutiveORDays(1,108)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning at line 15 in user-defined function section "SolveCPLAN":
+Only 3 out of 6439 duplicate row warnings were reported. 
+See also option limit_reported_duplicate_column_row_warnings.
+Warning at line 15 in user-defined function section "SolveCPLAN":
+After 3682109 iterations CBC 2.9 terminated and OFunction is still infeasible.
+Warning: The rows "C_MaxConsecutiveORDays(1,107)" and "C_MaxConsecutiveORDays(1,109)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning: The rows "C_MaxConsecutiveORDays(1,109)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning: The rows "C_MaxConsecutiveORDays(1,108)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning: Only 3 out of 6439 duplicate row warnings were reported. 
+See also option limit_reported_duplicate_column_row_warnings.
+Warning: After 3682109 iterations CBC 2.9 terminated and OFunction is still infeasible.
+Warning at line 15 in user-defined function section "SolveCPLAN":
+The rows "C_MaxConsecutiveORDays(1,107)" and "C_MaxConsecutiveORDays(1,109)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning at line 15 in user-defined function section "SolveCPLAN":
+The rows "C_MaxConsecutiveORDays(1,109)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning at line 15 in user-defined function section "SolveCPLAN":
+The rows "C_MaxConsecutiveORDays(1,108)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning at line 15 in user-defined function section "SolveCPLAN":
+Only 3 out of 6439 duplicate row warnings were reported. 
+See also option limit_reported_duplicate_column_row_warnings.
+Warning at line 15 in user-defined function section "SolveCPLAN":
+After 9826477 iterations CBC 2.9 found an integer solution to OFunction.
+The minimum found for Z is 19403.72.
+Warning: The rows "C_MaxConsecutiveORDays(1,107)" and "C_MaxConsecutiveORDays(1,109)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning: The rows "C_MaxConsecutiveORDays(1,109)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning: The rows "C_MaxConsecutiveORDays(1,108)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning: Only 3 out of 6439 duplicate row warnings were reported. 
+See also option limit_reported_duplicate_column_row_warnings.
+Warning: After 9826477 iterations CBC 2.9 found an integer solution to OFunction.
+The minimum found for Z is 19403.72.
+Warning at line 15 in user-defined function section "SolveCPLAN":
+The rows "C_MaxConsecutiveORDays(1,107)" and "C_MaxConsecutiveORDays(1,109)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning at line 15 in user-defined function section "SolveCPLAN":
+The rows "C_MaxConsecutiveORDays(1,109)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning at line 15 in user-defined function section "SolveCPLAN":
+The rows "C_MaxConsecutiveORDays(1,108)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning at line 15 in user-defined function section "SolveCPLAN":
+Only 3 out of 6439 duplicate row warnings were reported. 
+See also option limit_reported_duplicate_column_row_warnings.
+Warning at line 15 in user-defined function section "SolveCPLAN":
+After 10567645 iterations CBC 2.9 terminated and OFunction is still infeasible.
+Warning: The rows "C_MaxConsecutiveORDays(1,107)" and "C_MaxConsecutiveORDays(1,109)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning: The rows "C_MaxConsecutiveORDays(1,109)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning: The rows "C_MaxConsecutiveORDays(1,108)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning: Only 3 out of 6439 duplicate row warnings were reported. 
+See also option limit_reported_duplicate_column_row_warnings.
+Warning: After 10567645 iterations CBC 2.9 terminated and OFunction is still infeasible.
+Warning at line 15 in user-defined function section "SolveCPLAN":
+The rows "C_MaxConsecutiveORDays(1,107)" and "C_MaxConsecutiveORDays(1,109)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning at line 15 in user-defined function section "SolveCPLAN":
+The rows "C_MaxConsecutiveORDays(1,109)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning at line 15 in user-defined function section "SolveCPLAN":
+The rows "C_MaxConsecutiveORDays(1,108)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning at line 15 in user-defined function section "SolveCPLAN":
+Only 3 out of 6439 duplicate row warnings were reported. 
+See also option limit_reported_duplicate_column_row_warnings.
+Warning at line 15 in user-defined function section "SolveCPLAN":
+After 17828437 iterations CBC 2.9 terminated and OFunction is still infeasible.
+Warning: The rows "C_MaxConsecutiveORDays(1,107)" and "C_MaxConsecutiveORDays(1,109)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning: The rows "C_MaxConsecutiveORDays(1,109)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning: The rows "C_MaxConsecutiveORDays(1,108)" and "C_MaxConsecutiveORDays(1,110)" are equal in the generated mathematical program "OFunction". 
+This may lead to non-unique shadow prices. 
+For more information regarding potential causes and consequences, see the help associated with the option "Warning_duplicate_row".
+Warning: Only 3 out of 6439 duplicate row warnings were reported. 
+See also option limit_reported_duplicate_column_row_warnings.
+Warning: After 17828437 iterations CBC 2.9 terminated and OFunction is still infeasible.

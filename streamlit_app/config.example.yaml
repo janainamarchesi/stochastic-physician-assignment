@@ -1,0 +1,6 @@
+aimms_exe_path: "C:\\Program Files\\AIMMS\\AIMMS 4.92\\bin\\AIMMS.exe"
+project_path: "C:\\Users\\janaina.marchesi_ifo\\Documents\\exploration_study\\model_aimms2\\CPLAN Stochastic SAA CERTO StoHard Cap8\\CPLAN.aimms"
+run_procedure: "SolveCPLAN"
+use_powershell: true
+
+

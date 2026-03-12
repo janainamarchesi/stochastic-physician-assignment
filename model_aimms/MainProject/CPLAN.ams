@@ -1,0 +1,1376 @@
+## ams_version=1.0
+
+Model Main_CPLAN {
+	Section Import;
+	Section MainModelUsedInApp {
+		DeclarationSection ModelSets {
+			Set Physicians {
+				SubsetOf: Integers;
+				Index: j;
+				Definition: elementrange(1,NumberOfPhysicians);
+			}
+			Set Days {
+				SubsetOf: Integers;
+				Index: t, tt;
+				Property: ElementsAreNumerical;
+				Definition: elementrange(1,PlanHorizon);
+			}
+			Set Days2 {
+				SubsetOf: Days;
+			}
+			Set Assign {
+				SubsetOf: Integers;
+				Index: k;
+				InitialData: data{1,2,3,4,5,6,7};
+				Comment: {
+					"1 - OR
+					2 - Clinic
+					3 - A/R/E
+					4 - Gonda
+					5 - 2OR
+					6 - ER
+					7 - Unassing
+					This set can be overwritten by the Streamlit input (Assign.csv or aimms_input.txt)."
+				}
+			}
+			Set Scenarios {
+				SubsetOf: Integers;
+				Index: s;
+				Definition: elementrange(1,TotalScenarios);
+			}
+			Set SetOfConstraints {
+				SubsetOf: AllConstraints;
+				Definition: {
+					data{C_ClinicCapacity, C_ClinicWait1, C_ClinicWait2, C_SugeryDemand1, C_SugeryDemand2, 
+					C_SurgeryCapacity, C_SurgeryWait1, C_SurgeryWait2, 
+					C_PhysicianAssign, C_MaxConsecutiveORDays, C_MaxOR, C_MinOR, C_MinClinic, C_MinTypePerJK}
+				}
+			}
+			Set SetOfVariables {
+				SubsetOf: AllVariables;
+				Definition: data{clinicwait, surgerywait, clinic, surgery, surgerydemand, x, Z};
+			}
+		}
+		DeclarationSection ModelParameters {
+			Parameter PlanHorizon;
+			Parameter NumberOfPhysicians;
+			Parameter TotalScenarios;
+			Parameter Prob {
+				IndexDomain: s;
+				Definition: 1/card(Scenarios);
+			}
+			Parameter Alpha;
+			Parameter Demand {
+				IndexDomain: (t,s);
+			}
+			Parameter InicialQueueClinic;
+			Parameter InicialQueueSurgery {
+				IndexDomain: j;
+			}
+			Parameter ClinicCapacity {
+				IndexDomain: (j,t);
+			}
+			Parameter SurgeryCapacity {
+				IndexDomain: (j,t,k)| PhysicianAssign2(j, t, k) and isOR(k) = 1;
+			}
+			Parameter MaxConsecutiveORDays;
+			Parameter MaxOR {
+				IndexDomain: t;
+			}
+			Parameter MinOR;
+			Parameter PhysicianAssign2 {
+				IndexDomain: (j,t,k);
+				Range: binary;
+			}
+			Parameter BeginChangeAdmPTO;
+			Parameter EndChangeAdmPTO;
+			Parameter TwoORWindowStart;
+			Parameter TwoORWindowEnd;
+			Parameter isOR {
+				IndexDomain: k;
+				Range: binary;
+				Comment: "Flag: 1 if assignment type k is OR-related (e.g., OR or 2OR).";
+			}
+			Parameter isClinic {
+				IndexDomain: k;
+				Range: binary;
+				Comment: "Flag: 1 if assignment type k is Clinic-related.";
+			}
+			Parameter Beta;
+			Parameter ORMultiplier {
+				IndexDomain: k;
+				Comment: {
+					"Weight per OR assignment type; default 1, e.g., 2OR -> 2."
+				}
+			}
+			Parameter MinTypePerDay {
+				IndexDomain: (j,k);
+				Comment: "Generic minimum number of assignments per physician j and type k over the admin window (excludes Clinic and OR).";
+			}
+		}
+		DeclarationSection ModelVariables {
+			Variable clinicwait {
+				IndexDomain: (t,s);
+				Range: nonnegative;
+			}
+			Variable surgerywait {
+				IndexDomain: (j,t,s) |exists( (k) | PhysicianAssign2(j, t, k));
+				Range: nonnegative;
+			}
+			Variable x {
+				IndexDomain: (j,t,k) | PhysicianAssign2(j, t, k);
+				Range: binary;
+			}
+			Variable clinic {
+				IndexDomain: (j,t,s) |exists( (k) | PhysicianAssign2(j, t, k));
+				Range: integer;
+			}
+			Variable surgery {
+				IndexDomain: (j,t,s) |exists( (k) | PhysicianAssign2(j, t, k));
+				Range: integer;
+			}
+			Variable surgerydemand {
+				IndexDomain: (j,t,s) |exists( (k) | PhysicianAssign2(j, t, k));
+				Range: integer;
+			}
+		}
+		DeclarationSection ModelConstraints {
+			Constraint C_ClinicCapacity {
+				IndexDomain: (j,t,k,s) | isClinic(k) = 1;
+				Definition: clinic(j, t,s) <= x(j, t, k)*ClinicCapacity(j, t);
+				Comment: {
+					"Constraint (7) ensures that patients are assigned appointments with physicians only when the physician is allocated to that location on
+					that day and has available capacity."
+				}
+			}
+			Constraint C_SurgeryCapacity {
+				IndexDomain: (j,t,k,s)| isOR(k) = 1;
+				Definition: surgery(j, t,s) <=  x(j, t, k)*SurgeryCapacity(j, t, k);
+				Comment: {
+					"Constraint (7) ensures that patients are assigned appointments with physicians only when the physician is allocated to that location on
+					that day and has available capacity."
+				}
+			}
+			Constraint C_ClinicWait1 {
+				IndexDomain: (t,s)| t = 1;
+				Definition: clinicwait(t,s) = InicialQueueClinic + Demand(t-1, s) - sum(j,clinic(j, t,s));
+				Comment: {
+					"Constraint (2) enforces that each patient must be assign to a clinic ap-
+					pointment after the time that request an appointment and that each patient
+					may be assign to just one physician."
+				}
+			}
+			Constraint C_ClinicWait2 {
+				IndexDomain: (t,s)| t >=2;
+				Definition: clinicwait(t,s) = clinicwait(t-1,s) + Demand(t-1,s) - sum(j,clinic(j, t,s));
+				Comment: {
+					"Constraint (8) calculates the number of patients waiting for
+					clinic appointments each day."
+				}
+			}
+			Constraint C_SugeryDemand1 {
+				IndexDomain: (j,t,s);
+				Definition: surgerydemand(j, t,s) <= Alpha*clinic(j, t-1,s);
+				Comment: {
+					"Constraint (9)-(10) determine surgery demand for each physician,
+					where surgery demand represents a proportion of clinic appointments performed by each physician."
+				}
+			}
+			Constraint C_SugeryDemand2 {
+				IndexDomain: (j,t,s);
+				Definition: surgerydemand(j, t,s) >= Alpha*clinic(j, t-1,s) - 1;
+				Comment: {
+					"Constraint (9)-(10) determine surgery demand for each physician,
+					where surgery demand represents a proportion of clinic appointments performed by each physician."
+				}
+			}
+			Constraint C_SurgeryWait1 {
+				IndexDomain: (j,t,s)| t = 1;
+				Definition: surgerywait(j, t,s) = InicialQueueSurgery(j) + surgerydemand(j, t,s) - surgery(j, t,s);
+			}
+			Constraint C_SurgeryWait2 {
+				IndexDomain: (j,t,s)| t >=2;
+				Definition: surgerywait(j, t,s) = surgerywait(j, t-1,s) + surgerydemand(j, t,s) - surgery(j, t,s);
+				Comment: "Constraint (11) calculates the number of patients waiting for surgery each day for each physician.";
+			}
+			Constraint C_PhysicianAssign {
+				IndexDomain: (j,t)|exists( (k) | PhysicianAssign2(j, t, k));
+				Definition: sum(k, x(j, t, k)) = 1;
+				Comment: "Constraint (2) ensures that each physician is assigned to exactly one activity each day.";
+			}
+			Constraint C_MinTypePerJK {
+				IndexDomain: (j,k) | MinTypePerDay(j, k) > 0 and isClinic(k) = 0 and isOR(k) = 0 and exists( (t) | PhysicianAssign2(j, t, k));
+				Definition: sum(t | t >= BeginChangeAdmPTO and t <= EndChangeAdmPTO, x(j, t, k)) >= MinTypePerDay(j, k);
+				Comment: "Constraint (3) enforces the minimum number of appointments requirements for each physician in each assignment type";
+			}
+			Constraint C_MaxConsecutiveORDays {
+				IndexDomain: (j,t)| exists( (k) | PhysicianAssign2(j, t, k)) and (t>=BeginChangeAdmPTO and t<=EndChangeAdmPTO);
+				ActivatingCondition: v(j, t) = 1;
+				Definition: sum((tt,k) | tt >= t and tt <= t+MaxConsecutiveORDays and isOR(k) = 1 , x(j, tt, k)) <= MaxConsecutiveORDays;
+				Comment: "Constraint (4) limits each physician to a maximum of q consecutive days in the operating room.";
+			}
+			Constraint C_MinOR {
+				IndexDomain: t|exists( (j,k) | SurgeryCapacity(j, t, k)) and (t>=BeginChangeAdmPTO and t<=EndChangeAdmPTO);
+				Definition: sum((j,k)| isOR(k) = 1, x(j, t, k) * ORMultiplier(k)) >= MinOR;
+				Comment: {
+					"Constraints (5)-(6) enforce upper and lower bounds on the number of physicians assigned to operating rooms per day,
+					respectively, based on departmental capacity constraints."
+				}
+			}
+			Constraint C_MaxOR {
+				IndexDomain: t|exists( (j,k) | SurgeryCapacity(j, t, k)) and ((t>=TwoORWindowStart and t <=TwoORWindowEnd) or (t>=BeginChangeAdmPTO and t<=EndChangeAdmPTO));
+				Definition: sum((j,k)| isOR(k) = 1, x(j, t, k) * ORMultiplier(k)) <= MaxOR(t);
+				Comment: {
+					"Constraints (5)-(6) enforce upper and lower bounds on the number of physicians assigned to operating rooms per day,
+					respectively, based on departmental capacity constraints."
+				}
+			}
+			Constraint C_MinClinic {
+				IndexDomain: t|exists( (j,k) | ClinicCapacity(j, t) and isClinic(k) = 1) and (t>=BeginChangeAdmPTO and t<=EndChangeAdmPTO);
+				Definition: sum((j,k)| isClinic(k) = 1, x(j, t, k)) >= 1;
+				Comment: "Specific minimum for Clinic per day in the window.";
+			}
+		}
+		DeclarationSection ModelObjective {
+			Variable Z {
+				Range: free;
+				Definition: {
+					sum((t,s), clinicwait(t,s)*Prob(s))*Beta + 
+					sum((j,t,s), surgerywait(j,t,s)*Prob(s))*(1-Beta)
+				}
+				Comment: {
+					"!sum((j,t,s), clinic(j, t, s)*Prob(s))*Beta + 
+					!sum((j,t,s), surgery(j, t, s)*Prob(s))*(1-Beta)"
+				}
+			}
+			MathematicalProgram OFunction {
+				Objective: Z;
+				Direction: minimize;
+				Constraints: SetOfConstraints;
+				Variables: SetOfVariables;
+				Type: Automatic;
+			}
+		}
+		DeclarationSection PaperValidationsNotUsedInApp {
+			Set SetOfConstraints2 {
+				SubsetOf: AllConstraints;
+				Definition: {
+					data{C_ClinicCapacity, C_ClinicWait1, C_ClinicWait2, C_SugeryDemand1, C_SugeryDemand2, 
+					C_SurgeryCapacity, C_SurgeryWait1, C_SurgeryWait2, 
+					C_PhysicianAssign, C_MaxConsecutiveORDays, C_MaxOR, C_MinOR, C_MinClinic, C_MinTypePerJK}
+					!RatioTwoWeeks, RatioDaily}
+				}
+				Comment: {
+					"data{C_ClinicCapacity, C_ClinicWait2, C_SugeryDemand1, C_SugeryDemand2, 
+					C_SurgeryCapacity, C_SurgeryWait2, 
+					C_PhysicianAssign, C_MaxConsecutiveORDays, C_MinAdm, C_MinPTO, C_MaxOR, C_MinOR,
+					RatioTwoWeeks, RatioDaily}"
+				}
+			}
+			MathematicalProgram OFunction2 {
+				Objective: Z;
+				Direction: minimize;
+				Constraints: SetOfConstraints2;
+				Variables: SetOfVariables;
+				Type: Automatic;
+			}
+			Variable s_are {
+				IndexDomain: (j)|exists( (t,k) | PhysicianAssign2(j, t, k));
+				Range: nonnegative;
+			}
+			Variable s_unassign {
+				IndexDomain: (j)|exists( (t,k) | PhysicianAssign2(j, t, k));
+				Range: nonnegative;
+			}
+			Variable s_gonda {
+				IndexDomain: (j)|exists( (t,k) | PhysicianAssign2(j, t, k));
+				Range: nonnegative;
+			}
+			Variable s_ratio1 {
+				IndexDomain: (j,t)|exists( (k) | PhysicianAssign2(j, t, k)) and ((t>=41 and t <=60) or (t>=81 and t<=100));
+				Range: nonnegative;
+			}
+			Variable s_ratio2 {
+				IndexDomain: (t) |((t>=41 and t <=60) or (t>=81 and t<=100));
+				Range: nonnegative;
+			}
+			Variable s_maxconsecutiveor {
+				IndexDomain: (j,t)|exists( (k) | PhysicianAssign2(j, t, k)) and (t>=84 and t<=111);
+				Range: nonnegative;
+			}
+			Variable s_maxor {
+				IndexDomain: (t) |((t>=45 and t <=68) or (t>=84 and t<=111));
+				Range: nonnegative;
+			}
+			Variable aux {
+				IndexDomain: (j,t,s);
+				Range: nonnegative;
+			}
+			Variable aux2 {
+				IndexDomain: (t,s);
+				Range: integer;
+			}
+			Constraint C_MinARE {
+				IndexDomain: (j)|exists( (t,k) | PhysicianAssign2(j, t, k));
+				Definition: {
+					sum((t,k)| t >= BeginChangeAdmPTO and t <= EndChangeAdmPTO and k=3 , x(j, t, k)) >= MinARE(j) !- s_are(j)
+				}
+				Comment: {
+					"Constraints (10)-(11) ensures that each physician have a minimum time
+					assign in Administratives tasks and PTO, respectively."
+				}
+			}
+			Constraint C_MinUnassign {
+				IndexDomain: (j)|exists( (t,k) | PhysicianAssign2(j, t, k));
+				Definition: {
+					sum((t,k)| t >= BeginChangeAdmPTO and t <= EndChangeAdmPTO and k=7 , x(j, t, k)) >= 0!MinUnassingn(j) - s_unassign(j)
+				}
+				Comment: {
+					"Constraints (10)-(11) ensures that each physician have a minimum time
+					assign in Administratives tasks and PTO, respectively."
+				}
+			}
+			Constraint C_MinGonda {
+				IndexDomain: (j)|exists( (t,k) | PhysicianAssign2(j, t, k));
+				Definition: {
+					sum((t,k)| t >= BeginChangeAdmPTO and t <= EndChangeAdmPTO and k=4 , x(j, t, k)) >= 0!MinGonda(j) - s_gonda(j)
+				}
+				Comment: {
+					"Constraints (10)-(11) ensures that each physician have a minimum time
+					assign in Administratives tasks and PTO, respectively."
+				}
+			}
+			Constraint C_AuxMaxOR {
+				IndexDomain: t|exists( (j,k) | SurgeryCapacity(j, t, k)) and ((t>=45 and t <=68) or (t>=84 and t<=111));
+				Definition: s_maxor(t) <= 1;
+				Comment: "Ensures that number of Physians assign to OR per day is not greater than the maximum OR department can use.";
+			}
+			Parameter isCO {
+				IndexDomain: k;
+				Range: binary;
+				Comment: "Flag: 1 if assignment type k belongs to Clinic∪OR subset.";
+			}
+			Parameter dayInTau {
+				IndexDomain: t;
+				Range: binary;
+				Comment: "Flag: 1 if day t ∈ τ (days for other tasks).";
+			}
+			Parameter TwoWeekPattern {
+				IndexDomain: t;
+				Range: binary;
+			}
+			Parameter PhysicianAssign {
+				IndexDomain: (j,t,k);
+				Range: binary;
+			}
+			Parameter Pen_ClinicWait;
+			Parameter MinARE {
+				IndexDomain: j;
+			}
+			Parameter Pen_SurgeryWait;
+			Parameter Pen_ARE {
+				Definition: {
+					3000
+					!5000
+				}
+			}
+			Parameter Pen_UN {
+				Definition: 5000;
+			}
+			Parameter Pen_GONDA {
+				Definition: 5000;
+			}
+			Parameter Pen_MAXOR {
+				Definition: 10;
+			}
+			Parameter Pen_MAXCONSECUTIVEOR {
+				Definition: {
+					150
+					!2.5
+					!!50
+				}
+			}
+			Parameter Pen_Ratio1 {
+				Definition: {
+					150
+					!125
+					!5
+				}
+			}
+			Parameter Pen_Ratio2 {
+				Definition: {
+					1500
+					!1250
+					!500
+				}
+			}
+			Parameter testealoc {
+				IndexDomain: (t,k);
+				Definition: sum(j,PhysicianAssign2(j, t, k));
+			}
+			Parameter Gama;
+			Parameter ClinicAppointmentsPerDay {
+				IndexDomain: (t,s);
+				Definition: sum((j),clinic(j, t,s));
+			}
+			Parameter TotalClinicAppointments {
+				IndexDomain: s;
+				Definition: sum(t, ClinicAppointmentsPerDay(t,s));
+			}
+			Parameter TotalClinicAppointmentsPerPhysician {
+				IndexDomain: (j,s);
+				Definition: sum((t),clinic(j, t,s));
+			}
+			Parameter TotalClinicWait {
+				IndexDomain: s;
+				Definition: sum(t,clinicwait(t,s));
+			}
+			Parameter AverageClinicWait {
+				Definition: sum((t,s), clinicwait(t,s))/PlanHorizon;
+			}
+			Parameter SumOfClinicWait {
+				IndexDomain: t;
+			}
+			Parameter AverageClinicWaitPerDay {
+				IndexDomain: t;
+			}
+			Parameter SurgeriesPerDay {
+				IndexDomain: (t,s);
+				Definition: sum((j),surgery(j, t,s));
+			}
+			Parameter TotalSurgeries {
+				IndexDomain: s;
+				Definition: sum(t, SurgeriesPerDay(t,s));
+			}
+			Parameter TotalSurgeriesPerPhysician {
+				IndexDomain: (j,s);
+				Definition: sum((t),surgery(j, t,s));
+			}
+			Parameter TotalSurgeryWait {
+				IndexDomain: s;
+				Definition: sum((j,t),surgerywait(j,t,s));
+			}
+			Parameter AverageSurgeryWait {
+				IndexDomain: s;
+				Definition: sum((j,t), surgerywait(j,t,s))/PlanHorizon;
+			}
+			Parameter SumOfSurgeryWait {
+				IndexDomain: t;
+			}
+			Parameter AverageSurgeryWaitPerDay {
+				IndexDomain: t;
+			}
+			Parameter TotalWaitSurgeryPerDay {
+				IndexDomain: (t,s);
+				Definition: sum(j,surgerywait(j, t,s));
+			}
+			Parameter ORSlotsPerDay {
+				IndexDomain: (t,s);
+				Definition: sum((j,k)| isOR(k) = 1, x(j, t, k)*SurgeryCapacity(j, t, k)) - sum(j,surgery(j, t,s));
+			}
+			Parameter ClinicSlotsPerDay {
+				IndexDomain: (t,s);
+				Definition: sum((j,k)| isClinic(k) = 1, x(j, t, k)*ClinicCapacity(j, t)) - sum(j,clinic(j, t,s));
+			}
+			Parameter ORByDay {
+				IndexDomain: (j,t);
+				Definition: sum((k)| isOR(k) = 1, x(j, t, k) * ORMultiplier(k));
+			}
+			Parameter ClinicByDay {
+				IndexDomain: (j,t);
+				Definition: sum((k)| isClinic(k) = 1, x(j, t, k));
+			}
+			Parameter ORtoClinicTwoWeeks {
+				IndexDomain: (j,t)| TwoWeekPattern(t);
+				Definition: {
+					if sum((tt)| (tt >= t and tt <= t+9), ClinicByDay(j, tt)) > 0 then
+						sum((tt)| (tt >= t and tt <= t+9), ORByDay(j, tt))/sum((tt)| (tt >= t and tt <= t+9), ClinicByDay(j, tt))
+					else
+						0
+					endif
+				}
+			}
+			Parameter ORtoClinicRatioDay {
+				IndexDomain: t;
+				Definition: {
+					if sum((j,k)| isClinic(k) = 1, x(j, t, k)) > 0 then
+						sum((j,k)| isOR(k) = 1, x(j, t, k) * ORMultiplier(k)) / sum((j,k)| isClinic(k) = 1, x(j, t, k))
+					else
+						0
+					endif
+				}
+				Comment: "/ sum((j,k)| isClinic(k) = 1, x(j, t, k))";
+			}
+			Parameter PhysiciansInClinic {
+				IndexDomain: (t);
+				Definition: sum((j,k)| isClinic(k) = 1, x(j, t, k));
+			}
+			Parameter PhysiciansInOR {
+				IndexDomain: (t);
+				Definition: sum((j,k)| isOR(k) = 1, x(j, t, k));
+			}
+			Parameter ParameterClinic {
+				IndexDomain: (j,t);
+				Definition: ceil(sum(s,clinic(j, t,s))/card(Scenarios));
+			}
+			Parameter ParameterSurgery {
+				IndexDomain: (j,t);
+				Definition: ceil(sum(s,surgery(j, t,s))/card(Scenarios));
+			}
+			Parameter Copy_AverageSurgeryWaitPerDay {
+				IndexDomain: t;
+			}
+		}
+	}
+	Section SAAPaperNotUsedInApp {
+		Procedure PerformSAA {
+			Body: {
+				!Source: Birge and Louveax 1998: Indroductions to stochastic program
+				
+				!option GUROBI_7_5::MIP_start := 'No';
+				!option GUROBI_7_5:: rebuild_before_solve := 'Yes';
+				!option GUROBI_7_5 :: MIP_absolute_optimality_tolerance := 0.1;
+				
+				TotalScenariosLB := 10; !N
+				TotalScenariosUB := 10; !\bar{N}
+				LBReplications := 10; 
+				UBReplications := 1; !M
+				
+				TotalScenarios := TotalScenariosUB;
+				DemUB(t, s, ub):= poisson(MeanDemand(t));
+				
+				!Calculate Lower Bound
+				
+				!for lb in LBReplicates do
+				!
+				!	empty allvariables;
+				!	empty InicialQueueClinic;
+				!	empty InicialQueueSurgery;
+				!	TotalScenarios := TotalScenariosLB;
+				!
+				!	for t in Days do 
+				!		for j in Physicians do
+				!			for k in Assign do 
+				!				if t in Days2 then
+				!					x(j, t, k) := PhysicianAssign2(j, t, k);
+				!				else
+				!					x(j, t, k) := 0;
+				!				endif;
+				!			endfor;
+				!		endfor;		
+				!	endfor;
+				!
+				!	x.nonvar((j,t,k)|t in Days2) := 1;			
+				!
+				!	!Sending message to the dashboard for tracking
+				!	message := formatstring("LB Run: %s", lb);
+				!	statusmessage(message);
+				!
+				!	!Sampling Random Parameters
+				!	Demand(t, s) := poisson(MeanDemand(t));
+				!	!DemRep1(t, s, lb) := Demand(t, s); !store demand for each scenarios for controling the data generate
+				!
+				!	!Solving the DE
+				!	solve OFunction2 where time_limit := 20*60;
+				!	!SolveCPLAN;
+				!
+				!	ClinicWaitScenario(s):= clinicwait('100', s);
+				!	SurgeryWaitScenario(j,s) := surgerywait(j, '100',s);
+				!
+				!	AverageClinicWaitRep(lb) := sum(s, ClinicWaitScenario(s))/TotalScenariosLB;
+				!
+				!	for j in Physicians do
+				!	AverageSurgeryWairRep(j, lb) := sum(s, SurgeryWaitScenario(j,s))/TotalScenariosLB;
+				!	endfor;
+				!
+				!endfor;	
+				!
+				!InicialQueueClinic := ceil(sum(lb, AverageClinicWaitRep(lb))/LBReplications);
+				!
+				! for j in Physicians do
+				! InicialQueueSurgery(j) := ceil(sum(lb,AverageSurgeryWairRep(j, lb))/LBReplications)
+				! endfor;
+				!
+				!LBReplications := 10; 
+				
+				empty xLBRep;
+				empty sareLBRep, sunassignLBRep, sgondaLBRep, smaxconsecutiveorLBRep, smaxorLBRep, sratio1LBRep, sratio2LBRep;
+				empty ClinicWaitLBRep,  SurgeryWaitLBRep, SurgeryDemandLBRep, SurgeryLBRep, ClinicLBRep;
+				empty TimeLBRep, LPLBRep, AuxLBRep;
+				empty LPUBRep, LPUBRep2, TimeUBRep, TimeUBRep2, DemRep1, ClinicWaitUBRep, SurgeryWaitUBRep, SurgeryDemandUBRep;
+				empty SurgeryUBRep, ClinicUBRep, LowerBoundRep;
+				
+				for lb in LBReplicates do
+				
+					empty allvariables;
+					TotalScenarios := TotalScenariosLB;
+				
+					for t in Days do 
+						for j in Physicians do
+							for k in Assign do 
+								if t in Days2 then
+									x(j, t, k) := PhysicianAssign2(j, t, k);
+								else
+									x(j, t, k) := 0;
+								endif;
+							endfor;
+						endfor;		
+					endfor;
+				
+					x.nonvar((j,t,k)|t in Days2) := 1;			
+				
+					!Sending message to the dashboard for tracking
+					message := formatstring("LB Run: %s", lb);
+					statusmessage(message);
+				
+					!Sampling Random Parameters
+					Demand(t, s) := poisson(MeanDemand(t));
+					DemRep1(t, s, lb) := Demand(t, s); !store demand for each scenarios for controling the data generate
+				
+					!Solving the DE
+					SolveCPLAN;
+				
+					!Storing Resuls
+					TimeLBRep(lb) := OFunction.SolutionTime;
+					LPLBRep(lb) := OFunction.LinearObjective;
+					LowerBoundRep(lb) := OFunction.Objective;
+					xLBRep(j, t, k, lb) := x(j, t, k);
+					!sareLBRep(j, lb) := s_are(j);
+					!sunassignLBRep(j, lb) := s_unassign(j);
+					!sgondaLBRep(j, lb) := s_gonda(j);
+					!sratio1LBRep(j,t, lb) := s_ratio1(j,t);
+					!sratio2LBRep(t, lb) := s_ratio2(t);
+					!smaxconsecutiveorLBRep(j, t, lb) := s_maxconsecutiveor(j, t);
+					!smaxorLBRep(t, lb) := s_maxor(t);
+					ClinicWaitLBRep(t, s, lb) := clinicwait(t, s);
+					SurgeryWaitLBRep(j, t, s, lb) := surgerywait(j, t,s);
+					SurgeryDemandLBRep(j, t, s, lb) := surgerydemand(j, t,s);
+					SurgeryLBRep(j, t,s,lb) := surgery(j, t,s);
+					ClinicLBRep(j, t,s, lb) := clinic(j, t,s);
+					!AuxLBRep(j,t,s, lb) := aux(j,t,s);
+					!Aux2LBRep(t,s, lb) := aux2(t,s);
+				
+				
+				
+					!Calculating Upper Bound
+				
+					!Fixing first-stage variables
+					x(j, t, k).nonvar := 1;
+					!s_are(j).nonvar := 1;
+					!s_unassign(j).nonvar := 1;
+					!s_gonda(j).nonvar := 1;
+					!s_ratio1(j,t).nonvar := 1;
+					!s_ratio2(t).nonvar := 1;
+					!s_maxconsecutiveor(j, t).nonvar := 1;
+					!s_maxor(t).nonvar := 1;
+				
+					!Calculating Upper Bound
+					TotalScenarios := TotalScenariosUB;
+				
+					for ub in UBReplicates do
+				
+						!Updating message to dashboard for tracking
+						message := formatstring("UB Run: %s", ub);
+						statusmessage(message);
+				
+						!Sampling Random Parameters
+						!Demand(t, s) := poisson(MeanDemand(t));
+						!DemRep2(t, s, lb, ub) := Demand(t, s); !store demand for each scenarios for controling the data generate
+						!DemUB(t, s, ub):= poisson(MeanDemand(t));
+						Demand(t, s) := DemUB(t, s, ub);
+				
+						!Solving the DE
+						SolveCPLAN;
+				
+						!Storing Resuls
+						TimeUBRep(ub, lb) := OFunction.SolutionTime;
+						LPUBRep(lb,ub) := OFunction.LinearObjective;
+						UpperBoundRep(lb, ub) := OFunction.Objective;
+				
+				
+				
+					endfor;
+				
+					!Realeasing variables for next run
+					x(j, t, k).nonvar := 0;
+					!s_are(j).nonvar := 0;
+					!s_unassign(j).nonvar := 0;
+					!s_gonda(j).nonvar := 0;
+					!s_ratio1(j,t).nonvar := 0;
+					!s_ratio2(t).nonvar := 0;
+					!s_maxconsecutiveor(j, t).nonvar := 0;
+					!s_maxor(t).nonvar := 0;
+				
+				
+				
+				endfor;
+			}
+		}
+		Procedure EvaluateCandidates {
+			Body: {
+				TotalScenariosUB := 1000; !\bar{N}
+				UBReplications := 1; !M
+				
+				TotalScenarios := TotalScenariosUB;
+				DemUB(t, s, ub):= poisson(MeanDemand(t));
+				
+				empty TimeUBRep2;
+				empty LPUBRep2;
+				empty UpperBoundRep2;
+				empty LowerBound2;
+				!empty gap2;
+				empty  ClinicWaitUBRep;
+				empty SurgeryWaitUBRep;
+				empty SurgeryDemandUBRep;
+				empty SurgeryUBRep;
+				empty ClinicUBRep;
+				
+				LowerBound2:= sum(lb, LowerBoundRep(lb))/LBReplications;
+				
+				for lb in SubsetLBReplicates do
+				
+					x(j, t, k) := xLBRep(j, t, k, lb);
+					!s_are(j) := sareLBRep(j, lb);
+					!s_unassign(j) := sunassignLBRep(j, lb);
+					!s_gonda(j) := sgondaLBRep(j, lb);
+					!s_ratio1(j, t) := sratio1LBRep(j, t, lb);
+					!s_ratio2(t) := 	sratio2LBRep(t, lb);	
+					!s_maxconsecutiveor(j, t) := smaxconsecutiveorLBRep(j, t, lb);
+				
+					!Sending message to the dashboard for tracking
+					message := formatstring("LB Run: %s", lb);
+					statusmessage(message);
+				
+					!Fixing first-stage variables
+					x(j, t, k).nonvar := 1;
+					!s_are(j).nonvar := 1;
+					!s_unassign(j).nonvar := 1;
+					!s_gonda(j).nonvar := 1;
+					!s_ratio1(j,t).nonvar := 1;
+					!s_ratio2(t).nonvar := 1;
+					!s_maxconsecutiveor(j, t).nonvar := 1;
+					!s_maxor(t).nonvar := 1;
+				
+					!Calculating Upper Bound
+					!TotalScenarios := TotalScenariosUB;
+				
+					for ub in UBReplicates do
+				
+						!Updating message to dashboard for tracking
+						message := formatstring("UB Run: %s", ub);
+						statusmessage(message);
+				
+						!Sampling Random Parameters
+						!Demand(t, s) := poisson(MeanDemand(t));
+						!DemRep2(t, s, lb, ub) := Demand(t, s); !store demand for each scenarios for controling the data generate
+						Demand(t, s) := DemUB(t, s, ub);
+				
+						!Solving the DE
+						SolveCPLAN;
+				
+						!Storing Resuls
+						TimeUBRep2(ub, lb) := OFunction.SolutionTime;
+						LPUBRep2(lb,ub) := OFunction.LinearObjective;
+						UpperBoundRep2(lb, ub) := OFunction.Objective;
+						ClinicWaitUBRep(t, s, lb,ub) := clinicwait(t, s);
+						SurgeryWaitUBRep(j, t, s, lb,ub) := surgerywait(j, t,s);
+						SurgeryDemandUBRep(j, t, s, lb,ub) := surgerydemand(j, t,s);
+						SurgeryUBRep(j, t,s,lb,ub) := surgery(j, t,s);
+						ClinicUBRep(j, t,s, lb,ub) := clinic(j, t,s);
+				
+					endfor;
+				
+					!Realeasing variables for next run
+					x(j, t, k).nonvar := 0;
+					!s_are(j).nonvar := 0;
+					!s_unassign(j).nonvar := 0;
+					!s_gonda(j).nonvar := 0;
+					!s_ratio1(j,t).nonvar := 0;
+					!s_ratio2(t).nonvar := 0;
+					!s_maxconsecutiveor(j, t).nonvar := 0;
+					!s_maxor(t).nonvar := 0;
+				
+				
+				endfor;
+			}
+		}
+		StringParameter message;
+		DeclarationSection SAAParameters {
+			Parameter TotalScenariosLB;
+			Parameter TotalScenariosUB;
+			Parameter LBReplications;
+			Parameter UBReplications;
+		}
+		DeclarationSection SAAAux {
+			Set LBReplicates {
+				Index: lb;
+				Definition: elementrange(1,LBReplications);
+			}
+			Set SubsetLBReplicates {
+				SubsetOf: LBReplicates;
+			}
+			Set UBReplicates {
+				Index: ub;
+				Definition: elementrange(1,UBReplications);
+			}
+			Set AlphaSet {
+				Index: a;
+				Definition: data{1,2,3};
+			}
+			Parameter MeanDemand {
+				IndexDomain: t;
+			}
+			Parameter xLBRep {
+				IndexDomain: (j,t,k,lb);
+			}
+			Parameter sareLBRep {
+				IndexDomain: (j,lb);
+			}
+			Parameter sunassignLBRep {
+				IndexDomain: (j,lb);
+			}
+			Parameter sgondaLBRep {
+				IndexDomain: (j,lb);
+			}
+			Parameter smaxconsecutiveorLBRep {
+				IndexDomain: (j,t,lb);
+			}
+			Parameter smaxorLBRep {
+				IndexDomain: (t,lb);
+			}
+			Parameter sratio1LBRep {
+				IndexDomain: (j,t,lb);
+			}
+			Parameter sratio2LBRep {
+				IndexDomain: (t,lb);
+			}
+			Parameter ClinicWaitLBRep {
+				IndexDomain: (t,s,lb);
+			}
+			Parameter AverageClinicWaitRep {
+				IndexDomain: lb;
+			}
+			Parameter ClinicWaitScenario {
+				IndexDomain: s;
+			}
+			Parameter SurgeryWaitLBRep {
+				IndexDomain: (j,t,s,lb);
+			}
+			Parameter SurgeryTotal {
+				IndexDomain: (t,s,lb);
+				Definition: sum(j,SurgeryWaitLBRep(j, t, s, lb));
+			}
+			Parameter AverageSurgeryWairRep {
+				IndexDomain: (j,lb);
+			}
+			Parameter SurgeryWaitScenario {
+				IndexDomain: (j,s);
+			}
+			Parameter SurgeryDemandLBRep {
+				IndexDomain: (j,t,s,lb);
+			}
+			Parameter SurgeryLBRep {
+				IndexDomain: (j,t,s,lb);
+			}
+			Parameter TotalSurgeryLBRep {
+				IndexDomain: (t,s,lb);
+				Definition: sum(j,SurgeryWaitLBRep(j, t, s, lb));
+			}
+			Parameter ClinicLBRep {
+				IndexDomain: (j,t,s,lb);
+			}
+			Parameter AuxLBRep {
+				IndexDomain: (j,t,s,lb);
+			}
+			Parameter Aux2LBRep {
+				IndexDomain: (t,s,lb);
+			}
+			Parameter TimeLBRep {
+				IndexDomain: lb;
+			}
+			Parameter LPLBRep {
+				IndexDomain: lb;
+			}
+			Parameter LPUBRep {
+				IndexDomain: (lb,ub);
+			}
+			Parameter LPUBRep2 {
+				IndexDomain: (lb,ub);
+			}
+			Parameter TimeUBRep {
+				IndexDomain: (ub,lb);
+			}
+			Parameter TimeUBRep2 {
+				IndexDomain: (ub,lb);
+			}
+			Parameter DemRep1 {
+				IndexDomain: (t,s,lb);
+			}
+			Parameter DemRep2 {
+				IndexDomain: (t,s,lb,ub);
+			}
+			Parameter DemUB {
+				IndexDomain: (t,s,ub);
+			}
+			Parameter ClinicWaitUBRep {
+				IndexDomain: (t,s,lb,ub);
+			}
+			Parameter SurgeryWaitUBRep {
+				IndexDomain: (j,t,s,lb,ub);
+			}
+			Parameter SurgeryDemandUBRep {
+				IndexDomain: (j,t,s,lb,ub);
+			}
+			Parameter SurgeryUBRep {
+				IndexDomain: (j,t,s,lb,ub);
+			}
+			Parameter ClinicUBRep {
+				IndexDomain: (j,t,s,lb,ub);
+			}
+			Parameter UpperBoundRep {
+				IndexDomain: (lb,ub);
+			}
+			Parameter UpperBoundRep2 {
+				IndexDomain: (lb,ub);
+			}
+			Parameter LowerBoundRep {
+				IndexDomain: lb;
+			}
+			Parameter OFOut {
+				IndexDomain: (lb,s);
+				Definition: {
+					sum((t), ClinicWaitLBRep(t, s, lb)*Prob(s)*Pen_ClinicWait) + 
+					sum((j,t), SurgeryWaitLBRep(j, t, s, lb)*Prob(s)*Pen_SurgeryWait) + 
+					sum(j, sareLBRep(j, lb)*Pen_ARE) +
+					sum(j, sunassignLBRep(j, lb)*Pen_UN) +
+					sum(j, sgondaLBRep(j,lb)*Pen_GONDA) +
+					sum((j,t), sratio1LBRep(j,t,lb)*Pen_Ratio1) +
+					sum(t, sratio2LBRep(t, lb)*Pen_Ratio2)+
+					sum((j,t), smaxconsecutiveorLBRep(j, t, lb)*Pen_MAXCONSECUTIVEOR)
+					
+					!sum((t), s_maxor(t)*Pen_MAXOR)
+				}
+			}
+			Parameter OFInSample {
+				IndexDomain: (lb,s);
+				Definition: {
+					sum((t), ClinicWaitLBRep(t, s, lb)*Prob(s)*Pen_ClinicWait) + 
+					sum((j,t), SurgeryWaitLBRep(j, t, s, lb)*Prob(s)*Pen_SurgeryWait) + 
+					sum(j, sareLBRep(j, lb)*Pen_ARE) +
+					sum(j, sunassignLBRep(j, lb)*Pen_UN) +
+					sum((j,t), sratio1LBRep(j, t, lb)*Pen_Ratio1) +
+					sum(t, sratio2LBRep(t, lb)*Pen_Ratio2)+
+					sum((j,t), smaxconsecutiveorLBRep(j, t, lb)*Pen_MAXCONSECUTIVEOR) 
+					!sum((t), s_maxor(t)*Pen_MAXOR)
+				}
+			}
+			Parameter LowerBound {
+				Definition: sum(lb, LowerBoundRep(lb))/LBReplications;
+			}
+			Parameter UpperBound {
+				IndexDomain: lb;
+				Definition: {
+					if UBReplications > 0 then 
+						sum(ub, UpperBoundRep(lb, ub))/UBReplications
+					else
+						0
+					endif
+				}
+			}
+			Parameter UpperBound2 {
+				IndexDomain: lb;
+				Definition: {
+					if UBReplications > 0 then 
+						sum(ub, UpperBoundRep2(lb, ub))/UBReplications
+					else
+						0
+					endif
+				}
+			}
+			Parameter LowerBound2;
+			Parameter gap {
+				IndexDomain: lb;
+				Definition: (UpperBound(lb) - LowerBound)*100/LowerBound;
+			}
+			Parameter gap2 {
+				IndexDomain: lb;
+				Definition: (UpperBound2(lb) - LowerBound2)*100/LowerBound2;
+			}
+			Parameter ZAlpha2 {
+				IndexDomain: a;
+				Comment: {
+					"1.645
+					1.959963985
+					2.575829304"
+				}
+			}
+			Parameter VarianceLB {
+				Definition: {
+					!sum(lb, (LowerBoundRep(lb)-LowerBound)^2)/(LBReplications-1)
+				}
+			}
+		}
+		DeclarationSection ResultsSAA {
+			Parameter AverageWaitClinic {
+				IndexDomain: (t,lb,ub);
+				Definition: sum(s,ClinicWaitUBRep(t, s, lb, ub))/1000;
+			}
+			Parameter MaxWaitClinicDay {
+				IndexDomain: (t,lb,ub);
+				Definition: max(s,ClinicWaitUBRep(t, s, lb, ub));
+			}
+			Parameter CapacityClinicDay {
+				IndexDomain: (j,t,k,lb)| isClinic(k) = 1;
+				Definition: xLBRep(j, t, k, lb)*ClinicCapacity(j, t);
+			}
+			Parameter TotalCapClinicDay {
+				IndexDomain: (t,k,lb)| isClinic(k) = 1;
+				Definition: sum(j,CapacityClinicDay(j, t, k, lb));
+			}
+			Parameter TotalTotalClinic {
+				IndexDomain: (t, s, lb, ub);
+				Definition: sum(j,ClinicUBRep(j, t, s, lb, ub));
+			}
+			Parameter SeenClinicDay {
+				IndexDomain: (j, t, lb, ub);
+				Definition: sum(s,ClinicUBRep(j, t, s, lb, ub))/1000;
+			}
+			Parameter TotalSeenClinic {
+				IndexDomain: (t, lb, ub);
+				Definition: sum(j,SeenClinicDay(j, t, lb, ub));
+				Comment: "Average";
+			}
+			Parameter AverageWaitSurgery {
+				IndexDomain: (t,j,lb,ub);
+				Definition: sum(s,SurgeryWaitUBRep(j, t, s, lb, ub))/1000;
+			}
+			Parameter MaxWaitTotalDay {
+				IndexDomain: (j,t,lb,ub);
+				Definition: max(s,SurgeryWaitUBRep(j, t, s, lb, ub));
+			}
+			Parameter TotalWaitSurgery {
+				IndexDomain: (t, s, lb, ub);
+				Definition: sum(j,SurgeryWaitUBRep(j, t, s, lb, ub));
+			}
+			Parameter AverageTotalWaitSurgery {
+				IndexDomain: (t,lb,ub);
+				Definition: sum(s,TotalWaitSurgery(t, s, lb, ub))/1000;
+			}
+			Parameter MaxTotalWaitSurgery {
+				IndexDomain: (t, lb, ub);
+				Definition: max(s,TotalWaitSurgery(t, s, lb, ub));
+			}
+			Parameter CapacitySurgeryDay {
+				IndexDomain: (j,t,lb);
+				Definition: sum(k | isOR(k) = 1, xLBRep(j, t, k, lb)*SurgeryCapacity(j, t, k));
+			}
+			Parameter TotalCapSurgeryDay {
+				IndexDomain: (t,lb);
+				Definition: sum((j),CapacitySurgeryDay(j, t, lb));
+			}
+			Parameter TotalTotalSurgeries {
+				IndexDomain: (t, s, lb, ub);
+				Definition: sum(j,SurgeryUBRep(j, t, s, lb, ub));
+			}
+			Parameter SurgeriesCasesDay {
+				IndexDomain: (j, t, lb, ub);
+				Definition: sum(s,SurgeryUBRep(j, t, s, lb, ub))/1000;
+			}
+			Parameter TotalSurgeriesCases {
+				IndexDomain: (t, lb, ub);
+				Definition: sum(j,SurgeriesCasesDay(j, t, lb, ub));
+			}
+			Parameter SurgeriesCasesWeek {
+				IndexDomain: (t,s,lb,ub) | TwoWeekPattern(t);
+				Definition: sum((j,tt)| (tt >= t and tt <= t+4),SurgeryUBRep(j, tt, s, lb, ub));
+			}
+			Parameter AverageSurgeriesCasesWeek {
+				IndexDomain: (t,lb,ub) | TwoWeekPattern(t);
+				Definition: sum((j,s,tt)| (tt >= t and tt <= t+4),SurgeryUBRep(j, tt, s, lb, ub))/100;
+			}
+			Parameter stde {
+				IndexDomain: (t,lb,ub);
+				Definition: sampledeviation(s,SurgeriesCasesWeek(t, s, lb, ub));
+			}
+		}
+	}
+	Section Procedures {
+		DeclarationSection AuxFullFilParametes {
+			Parameter e_Patients {
+				Range: free;
+			}
+			ElementParameter e_count {
+				Range: Integers;
+			}
+		}
+		DeclarationSection StreamlitIO {
+			StringParameter InputDir;
+			StringParameter OutputDir;
+			Parameter HasIOConfig {
+				Definition: (InputDir <> "" and OutputDir <> "");
+			}
+			StringParameter InputTextFile;
+			StringParameter OutputTextFile;
+		}
+		Procedure FullfillSets {
+			Body: {
+				!Empty AuxPatient;
+				!Empty DemandSurgery;
+				!Empty PatientsSurgery;
+				!
+				!for t in Days do
+				!DemandSurgery(t):= ceil(Demand(t)*0.68);
+				!endfor;
+				!
+				!e_count := 1;
+				!for t in Days do
+				!	for i in Patients do
+				!		if TimeOfArrival(i) >= t then
+				!			if AuxPatient(i) <> 1 then
+				!				if e_count <= DemandSurgery(t) then
+				!					PatientsSurgery += i;
+				!					AuxPatient(i) := 1;
+				!					e_count += 1;
+				!				endif;	
+				!			endif;
+				!		endif;	
+				!	endfor;
+				!	e_count := 1;
+				!endfor;
+				!
+			}
+		}
+		Procedure FullfillParameter {
+			Body: {
+				!Empty PatientArrival;
+				!Empty AuxPatient;
+				!Empty PatientArrival2;
+				!
+				!e_count := 1;
+				!
+				!for t in Days do
+				!	for i in Patients do 
+				!		if AuxPatient(i) <> 1 then
+				!			if e_count <= Demand(t) then
+				!				PatientArrival(i, t) := 1;
+				!				AuxPatient(i) := 1;
+				!				e_count += 1;
+				!			endif;
+				!		endif;
+				!	endfor;
+				!	e_count := 1;
+				!endfor;
+				!
+				!for i in Patients do
+				!	for t in Days do
+				!		if t >= TimeOfArrival(i) then
+				!			PatientArrival2(i, t) := 1; 
+				!		endif;	
+				!	endfor;
+				!endfor;
+				!
+			}
+		}
+		Procedure SolveCPLAN {
+			Body: {
+				!FullfillSets;
+				!FullfillParameter;
+				!ClinicCapacity(j, t) := 6;
+				!for k in ORAssing do
+				!	for j in Physicians do
+				!		for t in Days do
+				!			if k=1 then
+				!				SurgeryCapacity(j, t, k) := 3;
+				!			else	
+				!				SurgeryCapacity(j, t, k) := 5;
+				!			endif;
+				!		endfor;	
+				!	endfor;	
+				! endfor;
+				solve OFunction where time_limit := 120*60;
+				!FullfillResults;
+				!PosRun1;
+				!solve OFunction;
+			}
+		}
+		Procedure FullfillResults {
+			Body: {
+				!for t in Days do
+				!	for i in Patients do
+				!		if TimeOfArrival(i) <= t and TimeOfClinic(i) > t then
+				!			SumOfClinicWait(t) += t - TimeOfArrival(i);
+				!		endif;
+				!	endfor;
+				!	AverageClinicWaitPerDay(t) := SumOfClinicWait(t)/t;
+				!endfor;
+				!
+				!
+				!for t in Days do
+				!	for i in Patients do
+				!		if TimeOfClinic(i) <= t and TimeOfSurgery(i) > t then
+				!			SumOfSurgeryWait(t) += t - TimeOfClinic(i);
+				!		endif;
+				!	endfor;
+				!	AverageSurgeryWaitPerDay(t) := SumOfSurgeryWait(t)/t;
+				!endfor;
+				!
+			}
+			Comment: {
+				"and TimeOfClinic(i) > t
+				
+				
+				
+				for t in Days do
+					for i in Patients do
+						if tTimeOfClinic(i) - TimeOfArrival(i)"
+			}
+		}
+		Procedure PosRun1 {
+			Body: {
+				!ClinicCapacity(j, t) -= ParameterClinic(j, t);
+				!
+				!for k in ORAssing do
+				!	for j in Physicians do
+				!		for t in Days do
+				!			if SurgeryCapacity(j, t, k) - ParameterSurgery(j, t) < 0 then
+				!				SurgeryCapacity(j, t, k) := 0;
+				!			else	
+				!				SurgeryCapacity(j, t, k) -= ParameterSurgery(j, t);
+				!			endif;
+				!		endfor;	
+				!	endfor;	
+				!endfor;
+				!
+			}
+		}
+		Procedure RunOptimizationFromCSV {
+			Body: {
+				if not HasIOConfig then
+				    raise warning "Defina InputDir e OutputDir antes de rodar RunOptimizationFromCSV.";
+				    return 0;
+				endif;
+				
+				! Preferência: arquivo de texto AIMMS consolidado gerado pela UI
+				InputTextFile := InputDir + "\\aimms_input.txt";
+				if fileexists(InputTextFile) then
+				    read from file InputTextFile;
+				endif;
+				
+				! -----------------------------
+				! Rodar modelo
+				! -----------------------------
+				SolveCPLAN;
+				
+				! -----------------------------
+				! Exportar resultados
+				! -----------------------------
+				OutputTextFile := OutputDir + "\\aimms_output.txt";
+				block where
+				    single_column_display := 1,
+				    listing_page_width := 32000,
+				    listing_number_width := 20,
+				    listing_number_precision := 12 ;
+				    write x, clinicwait, surgerywait, clinic, surgery, Z
+				        to file OutputTextFile
+				        in backup mode ;
+				endblock ;
+				
+				! Mantém compatibilidade opcional: se desejar CSVs, use Data Exchange Library
+				
+				return 1;
+			}
+			Comment: {
+				"Lê CSVs da interface Streamlit, executa o modelo e exporta resultados.
+				 Ajuste InputDir/OutputDir em PostMainInitialization ou via UI (Data Manager)."
+			}
+		}
+	}
+	Procedure MainInitialization {
+		Comment: "Add initialization statements here that do NOT require any library being initialized already.";
+	}
+	Procedure PostMainInitialization {
+		Body: {
+			! Configure diretórios padrão para integração com Streamlit (relativos ao .aimms)
+			! A pasta do projeto (.aimms) está em 'CPLAN Stochastic ...', irmã de 'streamlit_app'
+			InputDir := "..\\streamlit_app\\runtime_input";
+			OutputDir := "..\\streamlit_app\\runtime_output";
+			
+			! Defaults dos parâmetros (podem ser sobrescritos por leitura de arquivo)
+			PlanHorizon := 111;
+			NumberOfPhysicians := 10;
+			MaxConsecutiveORDays := 3;
+			MinOR := 1;
+			BeginChangeAdmPTO := 84;
+			EndChangeAdmPTO := PlanHorizon;
+			TwoORWindowStart := 45;
+			TwoORWindowEnd := 68;
+			Alpha := 0.68;
+			Beta := 0.8;
+			Pen_ClinicWait := 1;
+			Pen_SurgeryWait := 1;
+			Gama := 0.8;
+			
+			! Default OR multipliers: 1 for all, 2 for the classic '2OR' type if present
+			for k do
+			    if Assign(k) then
+			        ORMultiplier(k) := 1;
+			    endif;
+			endfor;
+			if card(Assign) >= 5 then
+			    ORMultiplier(5) := 2;
+			endif;
+			
+			! Ensure MinTypePerDay is initialized (avoid warning; default 0 for all j,k)
+			for j do
+			    for k do
+			        if Assign(k) then
+			            MinTypePerDay(j, k) := 0;
+			        endif;
+			    endfor;
+			endfor;
+		}
+		Comment: {
+			"Add initialization statements here that require that the libraries are already initialized properly,
+			or add statements that require the Data Management module to be initialized."
+		}
+	}
+	Procedure MainExecution;
+	Procedure PreMainTermination {
+		Body: {
+			return DataManagementExit();
+		}
+		Comment: {
+			"Add termination statements here that require all libraries to be still alive.
+			Return 1 if you allow the termination sequence to continue.
+			Return 0 if you want to cancel the termination sequence."
+		}
+	}
+	Procedure MainTermination {
+		Body: {
+			return 1;
+		}
+		Comment: {
+			"Add termination statements here that do not require all libraries to be still alive.
+			Return 1 to allow the termination sequence to continue.
+			Return 0 if you want to cancel the termination sequence.
+			It is recommended to only use the procedure PreMainTermination to cancel the termination sequence and let this procedure always return 1."
+		}
+	}
+	Section Quantities_and_Units {
+		Comment: {
+			"This section contains all the units and quantities that are added automatically by AIMMS.
+			It is recommended to declare all your quantities here."
+		}
+		Quantity SI_Time_Duration {
+			BaseUnit: s;
+			Conversions: minute->s : #-># * 60;
+			Comment: {
+				"Expresses the value for the duration of periods.
+				
+				The unit s has been added automatically because it is a required unit for AimmsWebUI.
+				
+				The unit minute has been added automatically because it is a required unit for AimmsWebUI."
+			}
+		}
+	}
+}
