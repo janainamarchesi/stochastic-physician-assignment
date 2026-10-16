@@ -102,3 +102,31 @@ For detailed technical documentation, see `streamlit_app/DOCUMENTATION.md`.
 ### Nomenclature Reference
 
 For a comprehensive mapping between the academic paper notation, AIMMS model parameters, and the Streamlit interface labels, see the [Nomenclature Mapping](#nomenclature-mapping) section in `streamlit_app/DOCUMENTATION.md`. This reference helps ensure consistency when working with the model across different contexts.
+
+## Open-source implementation (no AIMMS required)
+
+The model and the full experimental pipeline of the paper are also available as free
+software, maintained at **[igor-peres/dsf-physician-assignment](https://github.com/igor-peres/dsf-physician-assignment)**:
+
+- **Web app**: **https://igor-peres.github.io/dsf-physician-assignment/** runs in the browser and needs no install.
+  Load the paper's case or your own division, run the pipeline (HiGHS solver compiled to
+  WebAssembly) and compare with the values reported in the paper.
+- **Python package** (`pip install -r requirements.txt`, then `python -m dsf data/crs_case.json`):
+  same formulation, Eqs. (2)–(14), solved with [HiGHS](https://highs.dev) (MIT license).
+
+What it covers, using the paper's section numbers:
+
+| Paper | Open-source version |
+|---|---|
+| Two-stage stochastic model, Eqs. (2)–(14) | `dsf/model.py` |
+| Poisson scenarios and SAA convergence (Sec. 3.5, 4.1.1) | `dsf/scenarios.py`, `dsf/saa.py` |
+| Efficiency frontier over β, Table 5 | `python -m dsf case.json` |
+| DES rule (Eq. 15), EV/EEV, WS, VSS, EVPI (Tables 6–7) | `dsf/baselines.py` |
+| Observed vs optimized schedule (Table 8) | `--observed schedule.csv --observed-window 83,110` |
+| Continuity-of-care relaxation (Table 10) | `--relax 0,0.2,0.5,1` |
+
+The AIMMS project in `model_aimms/` and the Streamlit interface in `streamlit_app/` stay
+the reference implementation used for the results in the paper. Because the open-source
+version uses a different solver and a rolling-horizon strategy, its results can differ
+slightly. Institutional inputs that were not published (minimum assignments per physician,
+availability) have to be supplied to reproduce the paper's tables exactly.
